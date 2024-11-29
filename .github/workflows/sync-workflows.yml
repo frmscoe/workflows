@@ -2,16 +2,18 @@
 
 # This GitHub Actions workflow syncs workflows from a central repository to other repositories when a pull request is merged.
 
+# Please do not attempt to edit this flow without the direct consent from the DevOps team. This file is managed centrally.
+
 name: Sync Workflows
 
 on:
   pull_request:
-    types: [closed]  # Trigger this workflow when a pull request is closed
     branches: [ "dev" ] # The branches below must be a subset of the branches above
+  workflow_dispatch:
 
 jobs:
-  sync:
-    if: github.event.pull_request.merged == true  # Run this job only if the pull request was merged
+  Sync_All_Repos_Common_Workflows:
+    if: github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest  # Use the latest Ubuntu runner for the job
     steps:
       - name: Checkout Central Workflows Repo  # Step to checkout the repository containing the central workflows
@@ -47,7 +49,40 @@ jobs:
 
       - name: Sync Workflows to Other Repos  # Step to sync workflows to other repositories
         env:
-          REPOS: ${{ vars.TARGET_REPOS }}  # List of repositories to sync workflows to
+          REPOS: |  # List of repositories to sync workflows to
+            rule-001
+            rule-002
+            rule-003
+            rule-004
+            rule-006
+            rule-007
+            rule-008
+            rule-010
+            rule-011
+            rule-016
+            rule-017
+            rule-018
+            rule-020
+            rule-021
+            rule-024
+            rule-025
+            rule-026
+            rule-027
+            rule-028
+            rule-030
+            rule-044
+            rule-045
+            rule-048
+            rule-054
+            rule-063
+            rule-074
+            rule-075
+            rule-076
+            rule-078
+            rule-083
+            rule-084
+            rule-090
+            rule-091
           SPECIFIC_FILES: ${{ vars.SPECIFIC_FILES }}  # List of specific files not to copy to certain repositories
           SPECIFIC_REPOS: ${{ vars.SPECIFIC_REPOS }}  # List of specific repositories needing specific files not included
           PR_REVIEWERS: ${{ vars.PR_REVIEWERS }}  # List of reviewers
