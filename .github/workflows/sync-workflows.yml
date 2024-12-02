@@ -99,7 +99,7 @@ jobs:
           unset GH_TOKEN
           gh auth login --with-token < /tmp/gh_token
           for repo in $REPOS; do
-            git clone https://github.com/frmscoe/$repo.git
+            git clone https://${{ secrets.GH_USERNAME }}:${{ secrets.GH_TOKEN_LIB }}@github.com/frmscoe/$repo.git
             cd $repo
             git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
 
