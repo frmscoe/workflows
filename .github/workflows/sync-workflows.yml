@@ -94,10 +94,6 @@ jobs:
           # Configure Git user details
           git config --global user.name "${{ secrets.GH_USERNAME }}"
           git config --global user.email "${{ env.PR_AUTHOR_EMAIL }}"  # Optional, but recommended for commits
-
-          # Authenticate with GitHub CLI (gh)
-          echo "${{ secrets.GH_TOKEN_LIB }}" > /tmp/gh_token
-          gh auth login --with-token < /tmp/gh_token
           
           for repo in $REPOS; do
             git clone https://x-access-token:${{ secrets.GH_TOKEN_LIB }}@github.com/frmscoe/$repo.git
