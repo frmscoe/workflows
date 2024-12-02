@@ -7,8 +7,9 @@
 name: Sync Workflows
 
 on:
-  pull_request:
-    branches: [ "dev" ] # The branches below must be a subset of the branches above
+  push:
+    branches: 
+      - dev # The branches below must be a subset of the branches above
   workflow_dispatch:
 
 jobs:
