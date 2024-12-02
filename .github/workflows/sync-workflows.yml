@@ -95,7 +95,7 @@ jobs:
 
           # Clear the GITHUB_TOKEN environment variable and use a temporary file for gh authentication
           echo "${{ secrets.GH_TOKEN }}" > /tmp/gh_token
-          unset GH_TOKEN
+          unset GITHUB_TOKEN
           gh auth login --with-token < /tmp/gh_token
           for repo in $REPOS; do
             git clone https://${{ secrets.GH_USERNAME }}:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
