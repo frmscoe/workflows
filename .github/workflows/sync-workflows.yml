@@ -89,6 +89,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           SIGNED_OFF_BY="Signed-off-by: ${{ env.PR_AUTHOR_NAME_FULL }} <${{ env.PR_AUTHOR_EMAIL }}>"
+          export GH_USERNAME=${{ secrets.GH_USERNAME }}
+          export GH_TOKEN=${{ secrets.GH_TOKEN_LIB }}
+          git config --global user.name ${{ secrets.GH_USERNAME }}
+
+          # Clear the GITHUB_TOKEN environment variable and use a temporary file for gh authentication
+          echo "${{ secrets.GH_TOKEN_LIB }}" > /tmp/gh_token
+          unset GITHUB_TOKEN
+          unset GH_TOKEN
+          gh auth login --with-token < /tmp/gh_token
           for repo in $REPOS; do
             git clone https://github.com/frmscoe/$repo.git
             cd $repo
