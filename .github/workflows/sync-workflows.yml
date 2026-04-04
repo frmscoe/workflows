@@ -84,55 +84,93 @@ jobs:
             rule-084
             rule-090
             rule-091
-          SPECIFIC_FILES: ${{ vars.SPECIFIC_FILES }}  # List of specific files not to copy to certain repositories
-          SPECIFIC_REPOS: ${{ vars.SPECIFIC_REPOS }}  # List of specific repositories needing specific files not included
           PR_REVIEWERS: ${{ vars.PR_REVIEWERS }}  # List of reviewers
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           SIGNED_OFF_BY="Signed-off-by: ${{ env.PR_AUTHOR_NAME_FULL }} <${{ env.PR_AUTHOR_EMAIL }}>"
+
+          # Helper: check membership in a newline-delimited list
+          in_list() { echo "$2" | grep -Fxq "$1"; }
+
+          # Build the temp-workflows bundle once, outside the repo loop
+          mkdir -p temp-workflows
+          cp -r .github/workflows/* temp-workflows/
+          rm temp-workflows/sync-workflows.yml  # avoid recursive syncing
+          rm -f temp-workflows/node.js.yml       # preserve per-repo benchmark customisations
+
           for repo in $REPOS; do
             git clone https://github.com/frmscoe/$repo.git
             cd $repo
             git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
 
             if git ls-remote --heads origin sync-workflows-update | grep sync-workflows-update; then
-              # Branch exists, pull the latest changes
               git checkout sync-workflows-update
               git pull origin sync-workflows-update
             else
-              # Branch does not exist, create it
               git checkout -b sync-workflows-update
             fi
 
             cd ..
-            mkdir -p temp-workflows
-            cp -r .github/workflows/* temp-workflows/
-            rm temp-workflows/sync-workflows.yml  # Remove the sync-workflows.yml to avoid recursive syncing
-            rm temp-workflows/node.js.yml  # Remove the node.js.yml to avoid removing benchmarking tests specific for each repo
-            mkdir -p $repo/.github/workflows  # Create the workflows directory if it does not exist
-            
-            # Copy all files except the specific ones to certain repos
-            if [[ " ${SPECIFIC_REPOS} " =~ " ${repo} " ]]; then
-              for file in temp-workflows/*; do
-                if ! [[ " ${SPECIFIC_FILES} " =~ " $(basename $file) " ]]; then
-                  cp -r $file $repo/.github/workflows/
-                fi
-              done
-            else
-              cp -r temp-workflows/* $repo/.github/workflows/
-            fi
+            mkdir -p $repo/.github/workflows
+
+            # Copy all common workflow files; skip canonical package-rule*.yml definitions
+            # (rule repos receive caller stubs only — stamped below)
+            for file in temp-workflows/*; do
+              filename=$(basename "$file")
+              if [[ "${filename}" == package-rule*.yml ]]; then
+                continue
+              fi
+              cp -r "$file" "$repo/.github/workflows/"
+            done
+
+            # Stamp caller stubs (replaces the full per-repo package-rule copies)
+            RULE_NUM="${repo#rule-}"  # strip "rule-" prefix → "001", "044", etc.
+            # RC caller stub
+            printf '%s\n' \
+              '# SPDX-License-Identifier: Apache-2.0' \
+              '# This file is managed centrally — do not edit manually.' \
+              '# To change build behaviour, update the reusable workflow in frmscoe/workflows.' \
+              'on:' \
+              '  push:' \
+              '    branches: [dev]' \
+              '  workflow_dispatch:' \
+              'jobs:' \
+              '  build:' \
+              "    uses: frmscoe/workflows/.github/workflows/package-rule-rc.yml@dev" \
+              '    with:' \
+              "      rule_number: \"${RULE_NUM}\"" \
+              '      rule_org: "frmscoe"' \
+              '    secrets: inherit' \
+              > "$repo/.github/workflows/package-rule-rc.yml"
+            # Stable caller stub
+            printf '%s\n' \
+              '# SPDX-License-Identifier: Apache-2.0' \
+              '# This file is managed centrally — do not edit manually.' \
+              '# To change build behaviour, update the reusable workflow in frmscoe/workflows.' \
+              'on:' \
+              '  push:' \
+              '    branches: [main]' \
+              '  workflow_dispatch:' \
+              'jobs:' \
+              '  build:' \
+              "    uses: frmscoe/workflows/.github/workflows/package-rule.yml@main" \
+              '    with:' \
+              "      rule_number: \"${RULE_NUM}\"" \
+              '      rule_org: "frmscoe"' \
+              '    secrets: inherit' \
+              > "$repo/.github/workflows/package-rule.yml"
+            echo "Stamped caller stubs for rule-${RULE_NUM} (frmscoe)"
 
             cd $repo
             git add .
             git commit -m "ci: sync workflows from central-workflows ${SIGNED_OFF_BY}" || echo "No changes to commit"
             git push origin sync-workflows-update || git push origin sync-workflows-update --force
-            
-            # Clear the GITHUB_TOKEN environment variable and use a temporary file for gh authentication
+
+            # Authenticate gh CLI with scoped token
             echo "${{ secrets.GH_TOKEN }}" > /tmp/gh_token
             unset GITHUB_TOKEN
             gh auth login --with-token < /tmp/gh_token
-            
-            # Create the PR with reviewers
+
             IFS=',' read -ra REVIEWERS <<< "${PR_REVIEWERS}"
             REVIEWERS_ARGS=""
             for reviewer in "${REVIEWERS[@]}"; do
@@ -140,9 +178,5 @@ jobs:
             done
 
             gh pr create --title "ci: sync workflows from central-workflows" --body "This PR syncs workflows from the central-workflows repository. ${SIGNED_OFF_BY}" --base dev --head sync-workflows-update $REVIEWERS_ARGS || echo "PR already exists, updating existing PR"
-            
-            # Cleanup
+
             rm /tmp/gh_token
-            
-            cd ..
-          done
