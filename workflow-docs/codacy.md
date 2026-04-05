@@ -1,33 +1,9 @@
-## Workflow Name: Codacy Security Scan
+# `codacy.yml`
 
-#### Purpose: 
+> This workflow is distributed from [`tazama-lf/workflows`](https://github.com/tazama-lf/workflows) without modification. For full documentation — including trigger details, job steps, required secrets, and known limitations — see:
+>
+> **[`workflow-docs/codacy.md` in tazama-lf/workflows](https://github.com/tazama-lf/workflows/blob/dev/workflow-docs/codacy.md)**
 
-- This workflow performs security scans on the codebase using Codacy and uploads the results in SARIF format to GitHub.
+## frmscoe-specific notes
 
-#### Trigger Events:
-
-`Push`: Runs on pushes to the dev and main branches.
-
-`Pull Requests`: Runs on pull requests targeting dev and main.
-
-`Scheduled`: Runs every Thursday at 00:17 UTC.
-
-#### Permissions:
-
-`contents: read`: Allows reading repository contents.
-
-`security-events`: write: Allows uploading SARIF results.
-
-`actions: read`: Required for private repositories to retrieve Action run status.
-
-- Runs on: ubuntu-latest
-
-#### Workflow Steps:
-
-- Checkout Code: Uses actions/checkout@v4 to clone the repository.
-  
-- Run Codacy Analysis CLI: Executes Codacy's CLI to scan the codebase, generating a SARIF file.
-  
-- Upload SARIF Results: Uploads the SARIF file to GitHub using github/codeql-action/upload-sarif@v3.
-  
-- This workflow ensures that security issues in the codebase are identified and reported efficiently.
+_None — behaviour in `frmscoe` rule repos is identical to the canonical workflow._

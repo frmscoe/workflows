@@ -1,31 +1,9 @@
-## Workflow Name: Milestone Workflow
+# `milestone.yml`
 
-#### Purpose: 
+> This workflow is distributed from [`tazama-lf/workflows`](https://github.com/tazama-lf/workflows) without modification. For full documentation — including trigger details, job steps, required secrets, and known limitations — see:
+>
+> **[`workflow-docs/milestone.md` in tazama-lf/workflows](https://github.com/tazama-lf/workflows/blob/dev/workflow-docs/milestone.md)**
 
-- This workflow is designed to close a specific milestone on GitHub and trigger a release workflow. It is manually triggered with a specified milestone ID.
+## frmscoe-specific notes
 
-- This workflow streamlines the process of managing milestones and automates the transition to the release process.
-
-#### Trigger Events:
-
-`Workflow Dispatch`: This workflow is triggered manually with a milestoneId input.
-
-- Runs on: ubuntu-latest
-
-#### Workflow Steps:
-
-- Checkout Repository:
-
-Uses actions/checkout@v2 to clone the repository.
-
-- Set Up Environment Variables:
-
-Sets up necessary environment variables, including the GitHub token, milestone number, and GitHub API URL.
-
-- Close Milestone:
-
-Uses the GitHub API to close the specified milestone.
-
-- Trigger Release Workflow:
-
-Triggers another workflow for releasing, passing the milestone number as a payload using the peter-evans/repository-dispatch@v1 action.
+_None — behaviour in `frmscoe` rule repos is identical to the canonical workflow._

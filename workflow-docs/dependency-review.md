@@ -1,25 +1,9 @@
-## Workflow Name: Dependency Review
+# `dependency-review.yml`
 
-#### Purpose: 
+> This workflow is distributed from [`tazama-lf/workflows`](https://github.com/tazama-lf/workflows) without modification. For full documentation — including trigger details, job steps, required secrets, and known limitations — see:
+>
+> **[`workflow-docs/dependency-review.md` in tazama-lf/workflows](https://github.com/tazama-lf/workflows/blob/dev/workflow-docs/dependency-review.md)**
 
-- This workflow automatically reviews the dependencies of a project whenever a pull request (PR) is opened or updated, ensuring that new dependencies are checked for security vulnerabilities and other issues.
+## frmscoe-specific notes
 
-- This workflow helps maintain the security and stability of your project by automatically reviewing new or updated dependencies in pull requests.
-
-#### Trigger Events:
-
-`Pull Request`: The workflow runs whenever a pull request is created or updated.
-
-#### Permissions:
-
-`Contents`: read: Grants the action read-only access to the repository contents.
-
-- Runs on: ubuntu-latest
-
-#### Workflow Steps:
-
-- Checkout Repository:
-
-- Dependency Review:
-
-Uses actions/dependency-review-action@v4 to analyze the dependencies of the project and identify any potential issues.
+_None — behaviour in `frmscoe` rule repos is identical to the canonical workflow._
