@@ -24,7 +24,7 @@ Propagates canonical workflow files from this repository to all 33 active `frmsc
 ## Execution Context
 
 | Property | Value |
-|----------|
+|----------|-------|
 | Runner | `ubuntu-latest` |
 | Target org | `frmscoe` |
 | Target repos | 33 rule repos (active subset of `rule-001`–`rule-091`) |
