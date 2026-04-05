@@ -1,27 +1,9 @@
-## Workflow Name: GPG Verify
+# `gpg-verify.yml`
 
-#### Purpose: 
+> This workflow is distributed from [`tazama-lf/workflows`](https://github.com/tazama-lf/workflows) without modification. For full documentation — including trigger details, job steps, required secrets, and known limitations — see:
+>
+> **[`workflow-docs/gpg-verify.md` in tazama-lf/workflows](https://github.com/tazama-lf/workflows/blob/dev/workflow-docs/gpg-verify.md)**
 
-- This workflow automatically verifies the GPG signatures of commits in a pull request, ensuring that all commits are signed and verified as part of the code review process.
+## frmscoe-specific notes
 
-- This workflow helps enforce the use of GPG-signed commits, adding an extra layer of security to the contribution process.
-
-- If any commit fails the GPG verification, the workflow fails, ensuring only verified commits are merged.
-
-#### Trigger Events:
-
-`Pull Request`: The workflow triggers whenever a pull request is opened or updated.
-
-- Runs on: ubuntu-latest
-
-#### Workflow Steps:
-
-- Checkout Repository:
-
-- Set Up Environment Variables:
-
-Captures the head and base references of the pull request and sets up necessary environment variables.
-
-- Check GPG Verification Status:
-
-Retrieves the list of commits in the pull request. For each commit, it checks the GPG verification status using GitHub's API.
+_None — behaviour in `frmscoe` rule repos is identical to the canonical workflow._

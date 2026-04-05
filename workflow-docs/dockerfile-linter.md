@@ -1,37 +1,7 @@
-## Workflow Name: Hadolint
+# `dockerfile-linter.yml`
 
-#### Purpose: 
-
-- This workflow automates the linting of Dockerfiles using Hadolint and uploads the results to GitHub in SARIF format for further analysis.
-
-- This workflow ensures that Dockerfiles are automatically checked for best practices and potential issues, with results easily accessible within GitHub.
-
-#### Trigger Events:
-
-`Push`: Runs on pushes to the dev and main branches.
-
-`Pull Request`: Runs on pull requests targeting the dev branch.
-
-`Scheduled`: Runs every Sunday at 13:17 UTC.
-
-#### Permissions:
-
-`Contents: read:` Grants read-only access to the repository contents.
-
-`Security-events: write:` Allows uploading SARIF results.
-
-`Actions: read:` Required for private repositories to retrieve Action run status.
-
-- Runs on: ubuntu-latest
-
-#### Workflow Steps:
-
-- Checkout Code
-
-- Run Hadolint
-
-Generates a SARIF file with the results.
-
-- Upload Analysis Results:
-
-Uses github/codeql-action/upload-sarif@v2 to upload the SARIF file to GitHub for security analysis and code scanning.
+> **This workflow is not present in `frmscoe/workflows`.**
+>
+> `frmscoe` rule repos do not maintain Dockerfiles that are linted by a separate workflow. Docker image builds for rule repos are handled by the `package-rule-rc.yml` and `package-rule.yml` caller stubs distributed by `sync-workflows.yml`.
+>
+> For reference, see the canonical documentation in `tazama-lf/workflows`: [`workflow-docs/dockerfile-linter.md`](https://github.com/tazama-lf/workflows/blob/dev/workflow-docs/dockerfile-linter.md).

@@ -1,25 +1,9 @@
-## Workflow Name: DCO (Developer Certificate of Origin)
+# `dco-check.yml`
 
-#### Purpose: 
+> This workflow is distributed from [`tazama-lf/workflows`](https://github.com/tazama-lf/workflows) without modification. For full documentation — including trigger details, job steps, required secrets, and known limitations — see:
+>
+> **[`workflow-docs/dco-check.md` in tazama-lf/workflows](https://github.com/tazama-lf/workflows/blob/dev/workflow-docs/dco-check.md)**
 
-- This workflow automatically checks whether each commit in a pull request (PR) has a "Signed-off-by" line, ensuring compliance with the Developer Certificate of Origin (DCO).
+## frmscoe-specific notes
 
-- Retrieves commits between the head and base branches.
-
-- Verifies that each commit contains a "Signed-off-by" line.
-
-- Lists any non-compliant commits and fails the job if any are found.
-
-- This workflow enforces DCO compliance, ensuring that all contributions are properly signed off, indicating that the contributor agrees to the terms of the DCO.
-
-#### Trigger Events:
-
-`Pull Request`: The workflow triggers whenever a pull request event occurs (e.g., opened, updated).
-
-#### Workflow Steps:
-
-- Checkout Repository:
-
-- Set Up Environment Variables:
-
-- Check for DCO Sign-off:
+⚠️ The `git log` range in this workflow is reversed — it checks commits in the base branch that are not in the head branch, rather than the PR's new commits. DCO sign-off is not currently being verified correctly. This is a known issue tracked in [tazama-lf/workflows#37](https://github.com/tazama-lf/workflows/issues/37).
