@@ -1,0 +1,12 @@
+---
+engines:
+  eslint:
+    enabled: false
+  jshint:
+    enabled: false
+  tslint:
+    enabled: false
+  stylelint:
+    enabled: false
+  prettier:
+    enabled: false
