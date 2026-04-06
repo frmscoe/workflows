@@ -1,9 +1,73 @@
 # `dco-check.yml`
 
-> This workflow is distributed from [`tazama-lf/workflows`](https://github.com/tazama-lf/workflows) without modification. For full documentation — including trigger details, job steps, required secrets, and known limitations — see:
->
-> **[`workflow-docs/dco-check.md` in tazama-lf/workflows](https://github.com/tazama-lf/workflows/blob/dev/workflow-docs/dco-check.md)**
+## Purpose
 
-## frmscoe-specific notes
+Checks that every commit in a pull request includes a `Signed-off-by:` line, enforcing Developer Certificate of Origin (DCO) compliance across all contributions.
 
-⚠️ The `git log` range in this workflow is reversed — it checks commits in the base branch that are not in the head branch, rather than the PR's new commits. DCO sign-off is not currently being verified correctly. This is a known issue tracked in [tazama-lf/workflows#37](https://github.com/tazama-lf/workflows/issues/37).
+---
+
+## Trigger
+
+| Event | Conditions |
+|-------|-----------|
+| `pull_request` | all types |
+
+---
+
+## Execution Context
+
+| Property | Value |
+|----------|-------|
+| Runner | `ubuntu-latest` |
+| Typical duration | ~20 s |
+| Concurrency | none |
+| Permissions | default |
+
+---
+
+## Jobs
+
+### `dco` — DCO
+
+**Steps:**
+
+1. `actions/checkout@v4` — full history fetch (`fetch-depth: 0`)
+2. `Set up environment variables` — captures `BASE_BRANCH` and `HEAD_BRANCH` from PR context
+3. `Check for DCO Sign-off` — iterates commits between head and base; fails listing non-compliant SHAs
+
+---
+
+## Required Secrets
+
+None.
+
+---
+
+## Sync Distribution
+
+| Group | Behaviour |
+|-------|----------|
+| All `REPOS` | Receives this file |
+
+---
+
+## Dependencies (pinned actions)
+
+| Action | Pinned SHA | Semver alias |
+|--------|-----------|----------|
+| `actions/checkout` | tag ref `v4` | — |
+
+---
+
+## Known Limitations / Notes
+
+- `dependabot[bot]` actors are excluded.
+- The `git log` range uses `origin/HEAD_BRANCH..origin/BASE_BRANCH`, which gives commits present in the base but absent from the head — the reverse of what a DCO check requires. The correct range is `origin/BASE_BRANCH..origin/HEAD_BRANCH`. This is a latent bug; the check may pass silently on PRs that contain unsigned commits.
+
+---
+
+## Repository Overrides
+
+| Repository | Reason |
+|-----------|--------|
+| _(none)_ | _(all synced repos use the canonical version)_ |

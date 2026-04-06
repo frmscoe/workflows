@@ -39,7 +39,7 @@ jobs:
         with:
           results_file: results.sarif
           results_format: sarif
-# Publish results (badge + REST API) on main, schedule, and branch_protection_rule events.
+          # Publish results (badge + REST API) on main, schedule, and branch_protection_rule events.
           publish_results: ${{ github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'branch_protection_rule' }}
 
       - name: "Upload artifact"
