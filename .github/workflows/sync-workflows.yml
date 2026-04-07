@@ -122,7 +122,7 @@ jobs:
           rm -f temp-workflows/node.js.yml       # preserve per-repo benchmark customisations
 
           for repo in $REPOS; do
-            git clone https://github.com/frmscoe/$repo.git
+            git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
             cd $repo
             git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
 
