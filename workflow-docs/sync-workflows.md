@@ -68,7 +68,7 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 | File | Reason |
 |------|--------|
 | `sync-workflows.yml` | Canonical-only; never distributed |
-| `node.js.yml` | Each repo maintains its own copy |
+| `node-ci.yml` | Reusable workflow; consumer repos reference it at runtime via `@dev` |
 | `package-rule*.yml` (canonical definitions) | Replaced with per-repo caller stubs (see above) |
 
 ---
