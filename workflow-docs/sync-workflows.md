@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Propagates canonical workflow files from this repository to all 33 active `frmscoe` rule repos. Fires automatically on `push: dev` (i.e. after a PR is merged). All rule repos receive the same file set — there is no segmentation by repo type. Caller stubs for `package-rule*.yml` are stamped individually per repo with the correct rule number.
+Propagates canonical workflow files and the standard `.codacy.yml` engine allowlist from this repository to all 33 active `frmscoe` rule repos. Fires automatically on `push: dev` (i.e. after a PR is merged). All rule repos receive the same file set - there is no segmentation by repo type. Caller stubs for `package-rule*.yml` are stamped individually per repo with the correct rule number.
 
 ---
 
@@ -57,7 +57,9 @@ Propagates canonical workflow files from this repository to all 33 active `frmsc
    - Stamps a `package-rule-rc.yml` caller stub (referencing `frmscoe/workflows`, `push: [dev]`)
    - Stamps a `package-rule.yml` caller stub (referencing `frmscoe/workflows`, `push: [main]`)
    - Both stubs pass `rule_org: "frmscoe"` and the repo's zero-padded rule number
-   - Commits, pushes, opens `sync-workflows-update` PR targeting `dev`
+   - Copies `config-templates/.codacy.yml` to the repo root as `.codacy.yml` (standard Codacy engine allowlist for TypeScript/Node.js repos)
+   - Commits with `[skip ci]` in the commit message to suppress CI on the sync commit itself
+   - Pushes, opens `sync-workflows-update` PR targeting `dev` with `[skip ci]` in the PR title (so squash-merging the PR also skips CI)
 
 ---
 
@@ -99,7 +101,8 @@ Propagates canonical workflow files from this repository to all 33 active `frmsc
 ## Known Limitations / Notes
 
 - `gh` CLI is pinned to v2.14.7 via a hardcoded tarball URL; update the download URL and extracted paths in the `Install GitHub CLI` step when upgrading.
-- This repo is a manually-maintained mirror of `tazama-lf/workflows`. Changes to shared workflow files must originate in `tazama-lf/workflows` and be applied here separately — there is no automated sync between the two workflow repos.
+- This repo is a manually-maintained mirror of `tazama-lf/workflows`. Changes to shared workflow files must originate in `tazama-lf/workflows` and be applied here separately - there is no automated sync between the two workflow repos.
+- **`[skip ci]` in sync commits and PR titles:** Both the commit message and the PR title include `[skip ci]`. This suppresses CI on the sync commit itself (avoiding unnecessary workflow runs triggered by the push to `sync-workflows-update`). When a sync PR is squash-merged, GitHub uses the PR title as the squash commit message, so `[skip ci]` propagates to the merge commit automatically.
 - `dependabot[bot]` actors are excluded.
 
 ---
