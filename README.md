@@ -43,6 +43,7 @@ tazama-lf/workflows  →  (manual PR)  →  frmscoe/workflows  →  (auto sync o
 | Sync targets | 33 frmscoe rule repos | 26 tazama-lf repos |
 | Sync segmentation | None — all repos receive the same file set | `SPECIFIC_REPOS` / `PUBLISH_REPOS` / `RULE_REPOS` groups |
 | Missing workflows | `dockerfile-linter.yml`, `dockerhub-image-build.yml`, `dockerhub-image-build-rc.yml` | All canonical files present |
+| Node.js CI | `node-ci.yml` uses `NPM_SCOPE: @frmscoe`; stub calls `frmscoe/workflows/node-ci.yml@dev` | `node-ci.yml` uses `NPM_SCOPE: @tazama-lf`; stub calls `tazama-lf/workflows/node-ci.yml@dev` |
 
 ---
 
@@ -50,11 +51,11 @@ tazama-lf/workflows  →  (manual PR)  →  frmscoe/workflows  →  (auto sync o
 
 All 33 rule repos receive:
 
-`branch-target-check.yml`, `codacy.yml`, `codeql.yml`, `conventional-commits.yml`, `dco-check.yml`, `dependency-review.yml`, `gpg-verify.yml`, `milestone.yml`, `njsscan.yml`, `publish.yml`, `release-train.yml`, `release.yml`, `sbom.yml`, `scorecard.yml`, `version-check.yml`
+`branch-target-check.yml`, `codacy.yml`, `codeql.yml`, `conventional-commits.yml`, `dco-check.yml`, `dependency-review.yml`, `gpg-verify.yml`, `milestone.yml`, `njsscan.yml`, `node.js.yml` (caller stub), `publish.yml`, `release-train.yml`, `release.yml`, `sbom.yml`, `scorecard.yml`, `version-check.yml`
 
 Plus per-repo caller stubs for: `package-rule-rc.yml` (fires on `push: dev`) and `package-rule.yml` (fires on `push: main`)
 
-**Not distributed:** `sync-workflows.yml`, `node.js.yml` (each repo maintains its own copy), `package-rule*.yml` canonical reusable definitions (replaced with caller stubs)
+**Not distributed:** `sync-workflows.yml`, `node-ci.yml` (reusable workflow stays in this repo; consumer repos reference it at runtime via `@dev` ref), `package-rule*.yml` canonical reusable definitions (replaced with caller stubs)
 
 ---
 
@@ -81,7 +82,8 @@ Individual workflow documentation is in [`workflow-docs/`](workflow-docs/). For 
 | [`gpg-verify.md`](workflow-docs/gpg-verify.md) | → tazama-lf docs |
 | [`milestone.md`](workflow-docs/milestone.md) | → tazama-lf docs |
 | [`njsscan.md`](workflow-docs/njsscan.md) | → tazama-lf docs |
-| [`nodejs.md`](workflow-docs/nodejs.md) | → tazama-lf docs (⚠️ `NPM_SCOPE=@frmscoe`) |
+| [`node-ci.md`](workflow-docs/node-ci.md) | frmscoe-specific (`NPM_SCOPE=@frmscoe`) |
+| [`nodejs.md`](workflow-docs/nodejs.md) | → tazama-lf docs |
 | [`package-rule-rc.md`](workflow-docs/package-rule-rc.md) | frmscoe-specific |
 | [`package-rule.md`](workflow-docs/package-rule.md) | frmscoe-specific |
 | [`publish.md`](workflow-docs/publish.md) | frmscoe-specific (`@frmscoe` scope) |
