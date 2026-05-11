@@ -4,7 +4,7 @@
 
 > **⚠️ This repository is a downstream mirror of [`tazama-lf/workflows`](https://github.com/tazama-lf/workflows), which is the canonical source for all Tazama GitHub Actions workflows.**
 >
-> **All workflow changes must originate in `tazama-lf/workflows`.** There is no automated sync between the two workflow repos — changes must be applied here manually after merging in `tazama-lf/workflows`. **Do not edit workflow files in this repo directly** without a corresponding change upstream.
+> **All workflow changes must originate in `tazama-lf/workflows`.** There is no automated sync between the two workflow repos - changes must be applied here manually after merging in `tazama-lf/workflows`. **Do not edit workflow files in this repo directly** without a corresponding change upstream.
 
 For complete SDLC documentation, repository class definitions, workflow reference tables, routine maintenance procedures, and known issues, see the **[`tazama-lf/workflows` README](https://github.com/tazama-lf/workflows/blob/dev/README.md)**.
 
@@ -29,7 +29,7 @@ tazama-lf/workflows  →  (manual PR)  →  frmscoe/workflows  →  (auto sync o
 3. On merge to `dev` in `frmscoe/workflows`, `sync-workflows.yml` fires automatically (`push: dev`) and opens `sync-workflows-update` PRs in all 33 target rule repos.
 4. Reviewers merge the sync PRs in each rule repo.
 
-> **Note:** Unlike `tazama-lf/workflows` (which triggers sync on every PR event before merge), `frmscoe/workflows` triggers sync only on `push: dev` — i.e. after merge. Sync PRs in rule repos accurately reflect merged changes.
+> **Note:** Unlike `tazama-lf/workflows` (which triggers sync on every PR event before merge), `frmscoe/workflows` triggers sync only on `push: dev` - i.e. after merge. Sync PRs in rule repos accurately reflect merged changes.
 
 ---
 
@@ -41,7 +41,7 @@ tazama-lf/workflows  →  (manual PR)  →  frmscoe/workflows  →  (auto sync o
 | Docker caller stub org | `rule_org: "frmscoe"` | `rule_org: "tazama-lf"` |
 | Sync trigger | `push: dev` (after merge) | `pull_request: [dev]` (on open/update) |
 | Sync targets | 33 frmscoe rule repos | 26 tazama-lf repos |
-| Sync segmentation | None — all repos receive the same file set | `SPECIFIC_REPOS` / `PUBLISH_REPOS` / `RULE_REPOS` groups |
+| Sync segmentation | None - all repos receive the same file set | `SPECIFIC_REPOS` / `PUBLISH_REPOS` / `RULE_REPOS` groups |
 | Missing workflows | `dockerfile-linter.yml`, `dockerhub-image-build.yml`, `dockerhub-image-build-rc.yml` | All canonical files present |
 | Node.js CI | `node-ci.yml` uses `NPM_SCOPE: @frmscoe`; stub calls `frmscoe/workflows/node-ci.yml@dev` | `node-ci.yml` uses `NPM_SCOPE: @tazama-lf`; stub calls `tazama-lf/workflows/node-ci.yml@dev` |
 

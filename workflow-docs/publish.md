@@ -1,6 +1,6 @@
 # `publish.yml`
 
-> This workflow exists in **both** `tazama-lf/workflows` and `frmscoe/workflows`. The logic is identical but the npm scope differs — this variant publishes under `@frmscoe`, not `@tazama-lf`.
+> This workflow exists in **both** `tazama-lf/workflows` and `frmscoe/workflows`. The logic is identical but the npm scope differs - this variant publishes under `@frmscoe`, not `@tazama-lf`.
 >
 > For the `tazama-lf` variant, see [`workflow-docs/publish.md` in tazama-lf/workflows](https://github.com/tazama-lf/workflows/blob/dev/workflow-docs/publish.md).
 
@@ -38,12 +38,12 @@ Publishes an npm package to GitHub Packages under the `@frmscoe` scope. Determin
 
 ### `build-and-publish`
 
-1. `actions/checkout@v4` — with `GH_TOKEN_LIB` token
-2. `actions/setup-node@v4` — Node 20, registry `https://npm.pkg.github.com/`, scope `@frmscoe`
+1. `actions/checkout@v4` - with `GH_TOKEN_LIB` token
+2. `actions/setup-node@v4` - Node 20, registry `https://npm.pkg.github.com/`, scope `@frmscoe`
 3. Set up npm authentication (writes `_authToken` to `.npmrc`)
 4. `npm ci`
 5. `npm run build`
-6. Publish — reads version from `package.json`; publishes under `rc` if prerelease, otherwise `latest`
+6. Publish - reads version from `package.json`; publishes under `rc` if prerelease, otherwise `latest`
 7. Notify Slack
 
 ---
@@ -69,8 +69,8 @@ Publishes an npm package to GitHub Packages under the `@frmscoe` scope. Determin
 
 | Action | Pinned SHA | Semver alias |
 |--------|-----------|--------------|
-| `actions/checkout` | tag ref `v4` | — |
-| `actions/setup-node` | tag ref `v4` | — |
+| `actions/checkout` | tag ref `v4` | - |
+| `actions/setup-node` | tag ref `v4` | - |
 
 ---
 

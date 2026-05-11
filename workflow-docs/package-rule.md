@@ -13,7 +13,7 @@ Reusable workflow that builds and pushes a stable Docker image for a `frmscoe` r
 ## Caller stub (distributed to each rule repo by `sync-workflows.yml`)
 
 ```yaml
-# .github/workflows/package-rule.yml (in each frmscoe rule repo — managed centrally)
+# .github/workflows/package-rule.yml (in each frmscoe rule repo - managed centrally)
 on:
   push:
     branches: [main]
@@ -59,7 +59,7 @@ jobs:
 
 ## Known Limitations / Notes
 
-- The comment block in the canonical `frmscoe/workflows/package-rule.yml` file shows a `tazama-lf/workflows` caller stub example — this is incorrect; frmscoe rule repos should reference `frmscoe/workflows`. The caller stubs stamped by `sync-workflows.yml` are correct.
+- The comment block in the canonical `frmscoe/workflows/package-rule.yml` file shows a `tazama-lf/workflows` caller stub example - this is incorrect; frmscoe rule repos should reference `frmscoe/workflows`. The caller stubs stamped by `sync-workflows.yml` are correct.
 - `dependabot[bot]` actors are excluded.
 
 ---

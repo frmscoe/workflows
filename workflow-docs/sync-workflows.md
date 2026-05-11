@@ -14,7 +14,7 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 
 | Event | Conditions |
 |-------|-----------|
-| `push` | branches: `[dev]` — fires after merge, not on PR open |
+| `push` | branches: `[dev]` - fires after merge, not on PR open |
 | `workflow_dispatch` | manual |
 
 > **Key difference from `tazama-lf/workflows`:** This variant triggers on `push: dev` (fires once, after merge). The `tazama-lf` variant triggers on all `pull_request` events to `dev` (fires on open and update, before merge). See [tazama-lf/workflows#36](https://github.com/tazama-lf/workflows/issues/36).
@@ -28,7 +28,7 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 | Runner | `ubuntu-latest` |
 | Target org | `frmscoe` |
 | Target repos | 33 rule repos (active subset of `rule-001`–`rule-091`) |
-| Segmentation | None — all repos receive the same file set |
+| Segmentation | None - all repos receive the same file set |
 | Typical duration | ~20–40 min |
 | Permissions | default (plus `GH_TOKEN` for cross-repo operations) |
 
@@ -46,11 +46,11 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 
 **Steps:**
 
-1. `actions/checkout@v4` — checks out this repo
-2. `Set up Git` — configures git identity for commits
-3. `Install GitHub CLI` — downloads and installs `gh` CLI v2.14.7
-4. `Get PR author details` — captures author name and email for commit attribution
-5. `Sync Workflows to Other Repos` — main loop:
+1. `actions/checkout@v4` - checks out this repo
+2. `Set up Git` - configures git identity for commits
+3. `Install GitHub CLI` - downloads and installs `gh` CLI v2.14.7
+4. `Get PR author details` - captures author name and email for commit attribution
+5. `Sync Workflows to Other Repos` - main loop:
    - Clones each rule repo from `https://github.com/frmscoe/<repo>`
    - Checks out or creates the `sync-workflows-update` branch
    - Copies all files from the bundle **except** `package-rule*.yml` canonical definitions
@@ -94,7 +94,7 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 
 | Action | Pinned SHA | Semver alias |
 |--------|-----------|----------|
-| `actions/checkout` | tag ref `v4` | — |
+| `actions/checkout` | tag ref `v4` | - |
 
 ---
 
@@ -109,4 +109,4 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 
 ## Repository Overrides
 
-Not applicable — this workflow is canonical-only and is never distributed.
+Not applicable - this workflow is canonical-only and is never distributed.
