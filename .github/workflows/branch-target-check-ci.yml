@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Reusable branch target check workflow.
+# Called by consumer repos via a thin stub (branch-target-check.yml) that uses this workflow.
+# Logic changes belong here - do not add steps to the stub.
+# For more information see: https://docs.github.com/en/actions/sharing-automations/reusing-workflows
+
+# Please do not attempt to edit this flow without the direct consent from the DevOps team. This file is managed centrally.
+
+name: Branch target check (reusable)
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check-source-branch:
+    if: github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR source branch is dev or release/v<N>.*
+        env:
+          SOURCE: ${{ github.head_ref }}
+        run: |
+          if [[ "$SOURCE" == "dev" || "$SOURCE" == release/v[0-9]* || "$SOURCE" == "sync-workflows-update-main" ]]; then
+            echo "✅ Source branch '$SOURCE' is a valid base for a PR to main."
+          else
+            echo "❌ PRs to main must come from 'dev' or a 'release/v<N>.*' branch (e.g. release/v1.2)."
+            echo "   This PR is from '$SOURCE'."
+            echo ""
+            echo "   If you are working on a feature or fix, please retarget this PR to 'dev':"
+            echo "     gh pr edit --base dev"
+            echo ""
+            echo "   Only 'dev' → main (via release-train.yml), 'release/v<N>.*' → main, and"
+            echo "   'sync-workflows-update-main' → main (automated workflow sync) merges are permitted."
+            exit 1
+          fi
