@@ -122,7 +122,7 @@ jobs:
           mkdir -p temp-workflows
           cp -r .github/workflows/* temp-workflows/
           rm temp-workflows/sync-workflows.yml  # avoid recursive syncing
-          rm -f temp-workflows/node-ci.yml       # reusable workflow stays in this repo; consumer repos reference it at runtime via @dev
+          rm -f temp-workflows/*-ci.yml          # reusable workflows stay in this repo; consumer repos reference them at runtime via @dev
 
           for repo in $REPOS; do
             git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
