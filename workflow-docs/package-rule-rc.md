@@ -60,6 +60,7 @@ jobs:
 ## Known Limitations / Notes
 
 - The comment block in the canonical `frmscoe/workflows/package-rule-rc.yml` file shows a `tazama-lf/workflows` caller stub example - this is incorrect; frmscoe rule repos should reference `frmscoe/workflows`. The caller stubs stamped by `sync-workflows.yml` are correct.
+- The checkout step is pinned to `ref: dev`. RC builds must always read the rc line, but `actions/checkout` defaults to the ref that triggered the run - and under `repository_dispatch` (and `workflow_dispatch` once the default branch is `main`) that fallback is the repository default branch, not `dev`. Consumer rule repos pivoted their default branch from `dev` to `main`, so without the explicit `ref: dev` a dispatch-triggered run checked out `main` (a stable version) and failed the prerelease guard. Do not remove the `ref: dev` pin.
 - `dependabot[bot]` actors are excluded.
 
 ---
