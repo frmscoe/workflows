@@ -115,14 +115,19 @@ jobs:
           # Capture the workspace root so we can reference config-templates/ after cd-ing into each repo
           WORKFLOWS_ROOT="${GITHUB_WORKSPACE}"
 
-          # Helper: check membership in a newline-delimited list
-          in_list() { echo "$2" | grep -Fxq "$1"; }
-
           # Build the temp-workflows bundle once, outside the repo loop
           mkdir -p temp-workflows
           cp -r .github/workflows/* temp-workflows/
           rm temp-workflows/sync-workflows.yml  # avoid recursive syncing
           rm -f temp-workflows/*-ci.yml          # reusable workflows stay in this repo; consumer repos reference them at runtime via @dev
+          # Release/library workflows and reusable package-rule definitions live only in frmscoe/workflows.
+          # Rule repos either call them at runtime via @dev/@main, or receive thin caller stubs (package-rule*) stamped below.
+          rm -f temp-workflows/dev-to-main-pr.yml
+          rm -f temp-workflows/package-rule.yml
+          rm -f temp-workflows/package-rule-rc.yml
+          rm -f temp-workflows/publish.yml
+          rm -f temp-workflows/release.yml
+          rm -f temp-workflows/release-train.yml
 
           for repo in $REPOS; do
             git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
@@ -149,17 +154,8 @@ jobs:
             cd ..
             mkdir -p $repo/.github/workflows  # Create the workflows directory if it does not exist
 
-            # Copy all workflow files; apply per-file rules before copying
+            # Copy remaining workflow files from the filtered bundle
             for file in temp-workflows/*; do
-              filename=$(basename "$file")
-              # package-rule*.yml canonical definitions: never copy -- stubs are stamped below
-              if [[ "${filename}" == package-rule*.yml ]]; then
-                continue
-              fi
-              # publish.yml, version-check.yml, release-train.yml: library-only -- skip for rule repos
-              if [[ "${filename}" == "publish.yml" || "${filename}" == "version-check.yml" || "${filename}" == "release-train.yml" ]]; then
-                continue
-              fi
               cp -r "$file" "$repo/.github/workflows/"
             done
 
