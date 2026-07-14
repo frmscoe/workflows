@@ -49,13 +49,15 @@ tazama-lf/workflows  →  (manual PR)  →  frmscoe/workflows  →  (auto sync o
 
 ## Workflows distributed to frmscoe rule repos
 
-All 33 rule repos receive:
+All 33 rule repos receive (via `sync-workflows.yml`):
 
-`branch-target-check.yml`, `codacy.yml`, `codeql.yml`, `conventional-commits.yml`, `dco-check.yml`, `dependency-review.yml`, `gpg-verify.yml`, `milestone.yml`, `njsscan.yml`, `node.js.yml` (caller stub), `publish.yml`, `release-train.yml`, `release.yml`, `sbom.yml`, `scorecard.yml`, `version-check.yml`
+`branch-target-check.yml`, `codacy.yml`, `codeql.yml`, `conventional-commits.yml`, `dco-check.yml`, `dependency-review.yml`, `gpg-verify.yml`, `milestone.yml`, `njsscan.yml`, `node.js.yml` (caller stub), `sbom.yml`, `scorecard.yml`, `version-check.yml`
 
-Plus per-repo caller stubs for: `package-rule-rc.yml` (fires on `push: dev`) and `package-rule.yml` (fires on `push: main`)
+Plus per-repo caller stubs for: `package-rule-rc.yml` (fires on `push: dev`, uses `@dev`) and `package-rule.yml` (fires on `push: main`, uses `@main`)
 
-**Not distributed:** `sync-workflows.yml`, `node-ci.yml` (reusable workflow stays in this repo; consumer repos reference it at runtime via `@dev` ref), `package-rule*.yml` canonical reusable definitions (replaced with caller stubs)
+**Not distributed by sync** (central reusable / release workflows — installed later via bootstrap callers where needed):
+
+`sync-workflows.yml`, `node-ci.yml` (and other `*-ci.yml` implementations), `package-rule*.yml` (canonical definitions — stubs only), `publish.yml`, `release.yml`, `release-train.yml`, `dev-to-main-pr.yml`
 
 ---
 
@@ -67,7 +69,7 @@ Plus per-repo caller stubs for: `package-rule-rc.yml` (fires on `push: dev`) and
 
 ## Workflow documentation
 
-Individual workflow documentation is in [`workflow-docs/`](workflow-docs/). For workflows shared with `tazama-lf/workflows`, docs contain a redirect link to the canonical entry in that repo. Docs for frmscoe-specific behaviour (`publish.yml`, `package-rule*.yml`, `sync-workflows.yml`) are maintained here.
+Individual workflow documentation is in [`workflow-docs/`](workflow-docs/). For unchanged shared CI workflows, docs may still redirect to `tazama-lf/workflows`. Docs for the platform release reusable workflows and frmscoe sync behaviour are maintained here.
 
 | Doc | Status |
 |-----|--------|
@@ -76,6 +78,7 @@ Individual workflow documentation is in [`workflow-docs/`](workflow-docs/). For 
 | [`codeql.md`](workflow-docs/codeql.md) | → tazama-lf docs |
 | [`conventional-commits.md`](workflow-docs/conventional-commits.md) | → tazama-lf docs |
 | [`dco-check.md`](workflow-docs/dco-check.md) | → tazama-lf docs (⚠️ known issue [#37](https://github.com/tazama-lf/workflows/issues/37)) |
+| [`dev-to-main-pr.md`](workflow-docs/dev-to-main-pr.md) | platform release reusable (not synced) |
 | [`dependency-review.md`](workflow-docs/dependency-review.md) | → tazama-lf docs |
 | [`dockerfile-linter.md`](workflow-docs/dockerfile-linter.md) | Not in frmscoe/workflows |
 | [`dockerhub-image-build.md`](workflow-docs/dockerhub-image-build.md) | Not in frmscoe/workflows |
@@ -84,15 +87,15 @@ Individual workflow documentation is in [`workflow-docs/`](workflow-docs/). For 
 | [`njsscan.md`](workflow-docs/njsscan.md) | → tazama-lf docs |
 | [`node-ci.md`](workflow-docs/node-ci.md) | frmscoe-specific (`NPM_SCOPE=@frmscoe`) |
 | [`nodejs.md`](workflow-docs/nodejs.md) | → tazama-lf docs |
-| [`package-rule-rc.md`](workflow-docs/package-rule-rc.md) | frmscoe-specific |
-| [`package-rule.md`](workflow-docs/package-rule.md) | frmscoe-specific |
-| [`publish.md`](workflow-docs/publish.md) | frmscoe-specific (`@frmscoe` scope) |
-| [`release-train.md`](workflow-docs/release-train.md) | → tazama-lf docs |
-| [`release.md`](workflow-docs/release.md) | → tazama-lf docs |
+| [`package-rule-rc.md`](workflow-docs/package-rule-rc.md) | frmscoe caller + reusable (updated inputs / branch guard) |
+| [`package-rule.md`](workflow-docs/package-rule.md) | frmscoe caller + reusable (updated inputs / branch guard) |
+| [`publish.md`](workflow-docs/publish.md) | platform release reusable (not synced) |
+| [`release-train.md`](workflow-docs/release-train.md) | platform release reusable (not synced) |
+| [`release.md`](workflow-docs/release.md) | platform GitHub release reusable (not synced) |
 | [`sbom.md`](workflow-docs/sbom.md) | → tazama-lf docs (⚠️ known issue [#39](https://github.com/tazama-lf/workflows/issues/39)) |
 | [`scorecard.md`](workflow-docs/scorecard.md) | → tazama-lf docs |
-| [`sync-workflows.md`](workflow-docs/sync-workflows.md) | frmscoe-specific |
-| [`version-check.md`](workflow-docs/version-check.md) | → tazama-lf docs |
+| [`sync-workflows.md`](workflow-docs/sync-workflows.md) | frmscoe-specific (release exclusions) |
+| [`version-check.md`](workflow-docs/version-check.md) | synced PR gate for `main` |
 
 ---
 

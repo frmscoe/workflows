@@ -6,7 +6,9 @@
 
 ## Purpose
 
-Propagates canonical workflow files and the standard `.codacy.yml` engine allowlist from this repository to all 33 active `frmscoe` rule repos. Fires automatically on `push: dev` (i.e. after a PR is merged). All rule repos receive the same file set - there is no segmentation by repo type. Caller stubs for `package-rule*.yml` are stamped individually per repo with the correct rule number.
+Propagates **day-to-day CI** workflow files and the standard `.codacy.yml` from this repository to all 33 active `frmscoe` rule repos. Fires automatically on `push: dev` (after a PR is merged).
+
+This is **not** the installer for platform release callers. Release/reusable workflows (`release-train`, `publish`, `release`, `dev-to-main-pr`, and the full `package-rule*` definitions) stay central-only; rule repos get thin `package-rule*` caller stubs stamped by this workflow.
 
 ---
 
@@ -14,10 +16,10 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 
 | Event | Conditions |
 |-------|-----------|
-| `push` | branches: `[dev]` - fires after merge, not on PR open |
+| `push` | branches: `[dev]` — fires after merge, not on PR open |
 | `workflow_dispatch` | manual |
 
-> **Key difference from `tazama-lf/workflows`:** This variant triggers on `push: dev` (fires once, after merge). The `tazama-lf` variant triggers on all `pull_request` events to `dev` (fires on open and update, before merge). See [tazama-lf/workflows#36](https://github.com/tazama-lf/workflows/issues/36).
+> **Key difference from `tazama-lf/workflows`:** This variant triggers on `push: dev` (once, after merge). The `tazama-lf` variant triggers on `pull_request` events to `dev` (before merge). See [tazama-lf/workflows#36](https://github.com/tazama-lf/workflows/issues/36).
 
 ---
 
@@ -28,9 +30,9 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 | Runner | `ubuntu-latest` |
 | Target org | `frmscoe` |
 | Target repos | 33 rule repos (active subset of `rule-001`–`rule-091`) |
-| Segmentation | None - all repos receive the same file set |
+| Segmentation | None — all repos receive the same filtered file set |
+| Concurrency | `sync-workflows-${{ github.ref }}` (cancel-in-progress) |
 | Typical duration | ~20–40 min |
-| Permissions | default (plus `GH_TOKEN` for cross-repo operations) |
 
 ---
 
@@ -44,22 +46,20 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 
 ### `Sync_All_Repos_Common_Workflows`
 
-**Steps:**
+1. Checkout this workflows repo
+2. Configure git identity and **SSH commit signing** (`SSH_SIGNING_KEY` required)
+3. Capture actor details for DCO `Signed-off-by`
+4. Build a filtered temp workflow bundle, then for each rule repo:
+   - Clone the repo and ensure `dev` exists
+   - Recreate reserved branch `sync-workflows-update`
+   - Copy remaining workflow files from the filtered bundle
+   - Stamp `package-rule-rc.yml` caller (`uses: …@dev`, `push: [dev]`)
+   - Stamp `package-rule.yml` caller (`uses: …@main`, `push: [main]`)
+   - Copy `config-templates/.codacy.yml` → `.codacy.yml`
+   - Remove legacy `dco-check.yaml` if present
+   - Commit with `[skip ci]`, push, open/update PR to `dev` with `[skip ci]` in the title
 
-1. `actions/checkout@v4` - checks out this repo
-2. `Set up Git` - configures git identity for commits
-3. `Install GitHub CLI` - downloads and installs `gh` CLI v2.14.7
-4. `Get PR author details` - captures author name and email for commit attribution
-5. `Sync Workflows to Other Repos` - main loop:
-   - Clones each rule repo from `https://github.com/frmscoe/<repo>`
-   - Checks out or creates the `sync-workflows-update` branch
-   - Copies all files from the bundle **except** `package-rule*.yml` canonical definitions
-   - Stamps a `package-rule-rc.yml` caller stub (referencing `frmscoe/workflows`, `push: [dev]`)
-   - Stamps a `package-rule.yml` caller stub (referencing `frmscoe/workflows`, `push: [main]`)
-   - Both stubs pass `rule_org: "frmscoe"` and the repo's zero-padded rule number
-   - Copies `config-templates/.codacy.yml` to the repo root as `.codacy.yml` (standard Codacy engine allowlist for TypeScript/Node.js repos)
-   - Commits with `[skip ci]` in the commit message to suppress CI on the sync commit itself
-   - Pushes, opens `sync-workflows-update` PR targeting `dev` with `[skip ci]` in the PR title (so squash-merging the PR also skips CI)
+Uses the runner-provided `gh` CLI (no separate install step).
 
 ---
 
@@ -68,17 +68,26 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 | File | Reason |
 |------|--------|
 | `sync-workflows.yml` | Canonical-only; never distributed |
-| `node-ci.yml` | Reusable workflow; consumer repos reference it at runtime via `@dev` |
-| `package-rule*.yml` (canonical definitions) | Replaced with per-repo caller stubs (see above) |
+| `*-ci.yml` / reusable CI implementations | Stay in this repo; consumers call them at runtime via `@dev` |
+| `package-rule.yml` / `package-rule-rc.yml` (canonical) | Replaced with per-repo caller stubs |
+| `publish.yml` | Release reusable — bootstrap callers for package repos only |
+| `release.yml` | Release reusable — bootstrap callers only |
+| `release-train.yml` | Release reusable — bootstrap callers only |
+| `dev-to-main-pr.yml` | Release reusable — bootstrap callers for non-code repos only |
+
+`version-check.yml` remains in the sync bundle so rule repos get the PR-to-`main` prerelease gate that pairs with stable `package-rule.yml`.
 
 ---
 
 ## Required Secrets
 
 | Secret | Scope | Purpose |
-|--------|-------|-------|
+|--------|-------|---------|
 | `GH_TOKEN` | org | Clone, push, and open PRs in target repos |
-| `PR_REVIEWERS` | vars | Reviewer login(s) for sync PRs |
+| `GH_USERNAME` | org | Reviewer login(s) for sync PRs (`PR_REVIEWERS`) |
+| `SSH_SIGNING_KEY` | org | Base64-encoded SSH private key for verified sync commits |
+
+`SSH_SIGNING_KEY` must be set with `base64 -w 0 signing_key | gh secret set SSH_SIGNING_KEY`. The matching public key must be registered as a **Signing Key** on the GitHub account that owns `GH_TOKEN`.
 
 ---
 
@@ -86,27 +95,28 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 
 | Group | Behaviour |
 |-------|-----------|
-| **Not synced** | This file is excluded from the sync bundle |
+| **Not synced** | This file itself is excluded from the sync bundle |
 
 ---
 
 ## Dependencies (pinned actions)
 
 | Action | Pinned SHA | Semver alias |
-|--------|-----------|----------|
-| `actions/checkout` | tag ref `v4` | - |
+|--------|-----------|--------------|
+| `actions/checkout` | `de0fac2e…` | v6.0.2 |
 
 ---
 
 ## Known Limitations / Notes
 
-- `gh` CLI is pinned to v2.14.7 via a hardcoded tarball URL; update the download URL and extracted paths in the `Install GitHub CLI` step when upgrading.
-- This repo is a manually-maintained mirror of `tazama-lf/workflows`. Changes to shared workflow files must originate in `tazama-lf/workflows` and be applied here separately - there is no automated sync between the two workflow repos.
-- **`[skip ci]` in sync commits and PR titles:** Both the commit message and the PR title include `[skip ci]`. This suppresses CI on the sync commit itself (avoiding unnecessary workflow runs triggered by the push to `sync-workflows-update`). When a sync PR is squash-merged, GitHub uses the PR title as the squash commit message, so `[skip ci]` propagates to the merge commit automatically.
-- `dependabot[bot]` actors are excluded.
+- This repo is a manually-maintained mirror of `tazama-lf/workflows`. Shared workflow changes must originate upstream and be applied here separately
+- **`[skip ci]`** in sync commits and PR titles suppresses CI on the sync push and squash-merge
+- Release callers for libraries / non-code repos are installed by **bootstrap scripts**, not this sync
+- Reserved branch name: `sync-workflows-update` — do not use for normal development
+- `dependabot[bot]` actors are excluded
 
 ---
 
 ## Repository Overrides
 
-Not applicable - this workflow is canonical-only and is never distributed.
+Not applicable — this workflow is canonical-only and is never distributed.
