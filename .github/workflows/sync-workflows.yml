@@ -202,7 +202,7 @@ jobs:
               '  workflow_dispatch:' \
               'jobs:' \
               '  build:' \
-              "    uses: frmscoe/workflows/.github/workflows/package-rule.yml@main" \
+              "    uses: frmscoe/workflows/.github/workflows/package-rule.yml@v1" \
               '    with:' \
               "      rule_number: \"${RULE_NUM}\"" \
               '      rule_org: "frmscoe"' \
