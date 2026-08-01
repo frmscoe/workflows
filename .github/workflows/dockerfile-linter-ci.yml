@@ -38,7 +38,7 @@ jobs:
           no-fail: true
       - name: Upload analysis results to GitHub
         if: steps.hadolint.outcome == 'success'
-        uses: github/codeql-action/upload-sarif@5c8a8a642e79153f5d047b10ec1cba1d1cc65699  # v3
+        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81  # v3
         with:
           sarif_file: hadolint-results.sarif
           wait-for-processing: true
