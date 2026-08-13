@@ -132,6 +132,11 @@ jobs:
           rm -f temp-workflows/release.yml
           rm -f temp-workflows/release-train.yml
           rm -f temp-workflows/release-orchestrator.yml
+          # Private frmscoe rule repos: no dedicated Code Security scanning.
+          # SARIF uploads (njsscan / Scorecard) stay on public tazama-lf rule-901/902.
+          # See README "Decision: no dedicated Code Security scanning on private frmscoe rule repos".
+          rm -f temp-workflows/njsscan.yml
+          rm -f temp-workflows/scorecard.yml
 
           for repo in $REPOS; do
             git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
@@ -167,6 +172,10 @@ jobs:
               fi
               # publish.yml, version-check.yml, release-train.yml: library-only -- skip for rule repos
               if [[ "${filename}" == "publish.yml" || "${filename}" == "version-check.yml" || "${filename}" == "release-train.yml" ]]; then
+                continue
+              fi
+              # njsscan / scorecard: not distributed to private frmscoe rules (README decision)
+              if [[ "${filename}" == "njsscan.yml" || "${filename}" == "scorecard.yml" ]]; then
                 continue
               fi
               cp -r "$file" "$repo/.github/workflows/"
@@ -215,6 +224,9 @@ jobs:
             cp "${WORKFLOWS_ROOT}/config-templates/.codacy.yml" ".codacy.yml"
             # Remove legacy dco-check.yaml (wrong extension - canonical is dco-check.yml)
             rm -f .github/workflows/dco-check.yaml
+            # Drop private-repo Code Security scanners if still present from older syncs
+            rm -f .github/workflows/njsscan.yml
+            rm -f .github/workflows/scorecard.yml
             git add -A .github/workflows/ .codacy.yml
             git commit -m "ci: sync workflows from central-workflows [skip ci]" -m "${SIGNED_OFF_BY}" || echo "No changes to commit"
             git push origin sync-workflows-update || git push origin sync-workflows-update --force
