@@ -1,32 +1,11 @@
-## Workflow Name: njsscan sarif
+# `njsscan.yml`
 
-#### Purpose:
+> This workflow is distributed from [`tazama-lf/workflows`](https://github.com/tazama-lf/workflows) without modification. For full documentation - including trigger details, job steps, required secrets, and known limitations - see:
+>
+> **[`workflow-docs/njsscan.md` in tazama-lf/workflows](https://github.com/tazama-lf/workflows/blob/dev/workflow-docs/njsscan.md)**
 
-- This GitHub workflow is designed to run the njsscan code scanning tool and upload the results as a SARIF (Static Analysis Results Interchange Format) report to GitHub. Here's a detailed breakdown of the workflow:
+## frmscoe-specific notes
 
-- This workflow ensures that every push and pull request to the dev and main branches, as well as a weekly scheduled run, triggers a security scan using njsscan. The results are then uploaded to GitHub in SARIF format, allowing the repository maintainers to review and address potential security issues.
+**Not distributed to private `frmscoe` rule repos.** SARIF upload needs GitHub Code Security on private repos (billable). Decision: keep Node security scanning on the public reference rules [`tazama-lf/rule-901`](https://github.com/tazama-lf/rule-901) and [`tazama-lf/rule-902`](https://github.com/tazama-lf/rule-902), and propagate fixes through the normal central-workflow path. See the README section *Decision: no dedicated Code Security scanning on private frmscoe rule repos*.
 
-#### Trigger Events
-
-`push`:
-
-`branches: [ "dev", "main" ]`: The workflow will trigger whenever there is a push to the dev or main branches.
-
-`pull_request`:
-
-`branches: [ "dev", "main" ]`: The workflow will also trigger when a pull request is made targeting the dev or main branches.
-
-`schedule`:
-
-`cron: '17 17 * * 1'`: The workflow is scheduled to run automatically every Monday at 17:17 UTC.
-
-
-#### permissions:
-
-`contents`: read: Grants read access to the repository contents for the entire workflow.
-
-#### Workflow Steps
-
-- Checkout the code
-
-- njsscan
+The caller stub and `njsscan-ci.yml` remain in this repo for reference. `sync-workflows.yml` excludes them from the private-rule bundle and removes leftover copies on sync.

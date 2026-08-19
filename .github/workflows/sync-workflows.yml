@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# This GitHub Actions workflow syncs workflows from a central repository to other repositories when a pull request is merged.
+# This GitHub Actions workflow syncs workflows from a central repository to other repositories when changes are pushed to dev.
 
 # Please do not attempt to edit this flow without the direct consent from the DevOps team. This file is managed centrally.
 
@@ -8,9 +8,12 @@ name: Sync Workflows
 
 on:
   push:
-    branches: 
-      - dev # The branches below must be a subset of the branches above
+    branches: [ "dev" ]
   workflow_dispatch:
+
+concurrency:
+  group: sync-workflows-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   Sync_All_Repos_Common_Workflows:
@@ -18,32 +21,52 @@ jobs:
     runs-on: ubuntu-latest  # Use the latest Ubuntu runner for the job
     steps:
       - name: Checkout Central Workflows Repo  # Step to checkout the repository containing the central workflows
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
 
       - name: Set up Git  # Step to configure Git with necessary details
         run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
+          git config --global user.name 'Justus-at-Tazama'
+          git config --global user.email '123470803+Justus-at-Tazama@users.noreply.github.com'
           git config --global credential.helper store
+          # Configure SSH commit signing so sync commits show as Verified on GitHub.
+          # SSH_SIGNING_KEY must be stored base64-encoded (single line, no wrapping) to avoid
+          # line-ending corruption. Set with: base64 -w 0 signing_key | gh secret set SSH_SIGNING_KEY
+          # The corresponding public key must be registered as a Signing Key on the GitHub account
+          # that GH_TOKEN belongs to: Settings -> SSH and GPG keys -> New signing key.
+          if [ -z "${{ secrets.SSH_SIGNING_KEY }}" ]; then
+            echo "::error::SSH_SIGNING_KEY secret is not set. Commits cannot be signed. Add the secret before running the sync." >&2
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          # Decode the base64 secret directly to the key file -- no line-ending issues possible.
+          echo "${{ secrets.SSH_SIGNING_KEY }}" | base64 -d > ~/.ssh/signing_key
+          chmod 600 ~/.ssh/signing_key
+          # Validate the key is a usable Ed25519/RSA private key before enabling signing.
+          ssh-keygen -y -f ~/.ssh/signing_key > /dev/null || {
+            echo "::error::SSH_SIGNING_KEY is not a valid SSH private key or is passphrase-protected. Fix the secret before running the sync." >&2
+            exit 1
+          }
+          git config --global gpg.format ssh
+          git config --global user.signingkey ~/.ssh/signing_key
+          git config --global commit.gpgsign true
 
-      - name: Install GitHub CLI  # Step to install GitHub CLI for creating pull requests
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y curl
-          curl -fsSL https://github.com/cli/cli/releases/download/v2.14.7/gh_2.14.7_linux_amd64.tar.gz -o ghcli.tar.gz 
-          tar -xzf ghcli.tar.gz
-          sudo cp gh_2.14.7_linux_amd64/bin/gh /usr/local/bin/
-
-      - name: Get PR author details  # Step to get the details of the pull request author
+      - name: Get actor details  # Step to get the triggering actor details for the Signed-off-by line
         id: pr_author
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_AUTHOR_NAME=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" --jq '.user.login')
-          PR_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
-          PR_AUTHOR_NAME_FULL=$(git log -1 --pretty=format:'%an')
+          # For pull_request events use the PR author login; for push/workflow_dispatch fall back to the triggering actor.
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_AUTHOR_NAME=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" --jq '.user.login')
+            PR_AUTHOR_NAME_FULL=$(git log -1 --pretty=format:'%an')
+            PR_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
+          else
+            PR_AUTHOR_NAME="${{ github.actor }}"
+            PR_AUTHOR_NAME_FULL="${{ github.actor }}"
+            PR_AUTHOR_EMAIL="${{ github.actor }}@users.noreply.github.com"
+          fi
           echo "PR_AUTHOR_NAME=${PR_AUTHOR_NAME}" >> $GITHUB_ENV
           echo "PR_AUTHOR_EMAIL=${PR_AUTHOR_EMAIL}" >> $GITHUB_ENV
           echo "PR_AUTHOR_NAME_FULL=${PR_AUTHOR_NAME_FULL}" >> $GITHUB_ENV
@@ -84,54 +107,130 @@ jobs:
             rule-084
             rule-090
             rule-091
-          SPECIFIC_FILES: ${{ vars.SPECIFIC_FILES }}  # List of specific files not to copy to certain repositories
-          SPECIFIC_REPOS: ${{ vars.SPECIFIC_REPOS }}  # List of specific repositories needing specific files not included
-          PR_REVIEWERS: ${{ vars.PR_REVIEWERS }}  # List of reviewers
+          PR_REVIEWERS: ${{ secrets.GH_USERNAME }}  # List of reviewers
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           SIGNED_OFF_BY="Signed-off-by: ${{ env.PR_AUTHOR_NAME_FULL }} <${{ env.PR_AUTHOR_EMAIL }}>"
+
+          # Capture the workspace root so we can reference config-templates/ after cd-ing into each repo
+          WORKFLOWS_ROOT="${GITHUB_WORKSPACE}"
+
+          # Helper: check membership in a newline-delimited list
+          in_list() { echo "$2" | grep -Fxq "$1"; }
+
+          # Build the temp-workflows bundle once, outside the repo loop
+          mkdir -p temp-workflows
+          cp -r .github/workflows/* temp-workflows/
+          rm temp-workflows/sync-workflows.yml  # avoid recursive syncing
+          rm -f temp-workflows/*-ci.yml          # reusable workflows stay in this repo; consumer repos reference them at runtime via @dev
+          # Release/library workflows and reusable package-rule definitions live only in frmscoe/workflows.
+          # Rule repos either call them at runtime via @dev/@main, or receive thin caller stubs (package-rule*) stamped below.
+          rm -f temp-workflows/dev-to-main-pr.yml
+          rm -f temp-workflows/package-rule.yml
+          rm -f temp-workflows/package-rule-rc.yml
+          rm -f temp-workflows/publish.yml
+          rm -f temp-workflows/release.yml
+          rm -f temp-workflows/release-train.yml
+          rm -f temp-workflows/release-orchestrator.yml
+          # Private frmscoe rule repos: no dedicated Code Security scanning.
+          # SARIF uploads (njsscan / Scorecard) stay on public tazama-lf rule-901/902.
+          # See README "Decision: no dedicated Code Security scanning on private frmscoe rule repos".
+          rm -f temp-workflows/njsscan.yml
+          rm -f temp-workflows/scorecard.yml
+
           for repo in $REPOS; do
-            git clone https://github.com/frmscoe/$repo.git
+            git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
             cd $repo
             git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/frmscoe/$repo.git
 
-            if git ls-remote --heads origin sync-workflows-update | grep sync-workflows-update; then
-              # Branch exists, pull the latest changes
-              git checkout sync-workflows-update
-              git pull origin sync-workflows-update
+            # Ensure dev branch exists in target repo -- create from default branch if absent.
+            if ! git ls-remote --heads origin dev | grep -q dev; then
+              DEFAULT_BRANCH=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
+              echo "Branch 'dev' not found in $repo; creating from '${DEFAULT_BRANCH}'"
+              git checkout -b dev "origin/${DEFAULT_BRANCH}"
+              git push origin dev
             else
-              # Branch does not exist, create it
-              git checkout -b sync-workflows-update
+              git checkout dev
             fi
+
+            # Always delete and recreate sync-workflows-update to avoid accumulating stale changes.
+            # RESERVED: sync-workflows-update is managed by this workflow -- do not use it for regular development contributions.
+            if git ls-remote --heads origin sync-workflows-update | grep -q sync-workflows-update; then
+              git push origin --delete sync-workflows-update || true
+            fi
+            git checkout -b sync-workflows-update
 
             cd ..
-            mkdir -p temp-workflows
-            cp -r .github/workflows/* temp-workflows/
-            rm temp-workflows/sync-workflows.yml  # Remove the sync-workflows.yml to avoid recursive syncing
-            rm temp-workflows/node.js.yml  # Remove the node.js.yml to avoid removing benchmarking tests specific for each repo
             mkdir -p $repo/.github/workflows  # Create the workflows directory if it does not exist
-            
-            # Copy all files except the specific ones to certain repos
-            if [[ " ${SPECIFIC_REPOS} " =~ " ${repo} " ]]; then
-              for file in temp-workflows/*; do
-                if ! [[ " ${SPECIFIC_FILES} " =~ " $(basename $file) " ]]; then
-                  cp -r $file $repo/.github/workflows/
-                fi
-              done
-            else
-              cp -r temp-workflows/* $repo/.github/workflows/
-            fi
 
-            cd $repo
-            git add .
-            git commit -m "ci: sync workflows from central-workflows ${SIGNED_OFF_BY}" || echo "No changes to commit"
+            # Copy all workflow files; apply per-file rules before copying
+            for file in temp-workflows/*; do
+              filename=$(basename "$file")
+              # package-rule*.yml canonical definitions: never copy -- stubs are stamped below
+              if [[ "${filename}" == package-rule*.yml ]]; then
+                continue
+              fi
+              # publish.yml, version-check.yml, release-train.yml: library-only -- skip for rule repos
+              if [[ "${filename}" == "publish.yml" || "${filename}" == "version-check.yml" || "${filename}" == "release-train.yml" ]]; then
+                continue
+              fi
+              # njsscan / scorecard: not distributed to private frmscoe rules (README decision)
+              if [[ "${filename}" == "njsscan.yml" || "${filename}" == "scorecard.yml" ]]; then
+                continue
+              fi
+              cp -r "$file" "$repo/.github/workflows/"
+            done
+
+            # Stamp caller stubs for all frmscoe rule repos
+            RULE_NUM="${repo#rule-}"  # strip "rule-" prefix -> "001", "044", etc.
+            # RC caller stub
+            printf '%s\n' \
+              '# SPDX-License-Identifier: Apache-2.0' \
+              '# This file is managed centrally -- do not edit manually.' \
+              '# To change build behaviour, update the reusable workflow in frmscoe/workflows.' \
+              'on:' \
+              '  push:' \
+              '    branches: [dev]' \
+              '  workflow_dispatch:' \
+              'jobs:' \
+              '  build:' \
+              "    uses: frmscoe/workflows/.github/workflows/package-rule-rc.yml@dev" \
+              '    with:' \
+              "      rule_number: \"${RULE_NUM}\"" \
+              '      rule_org: "frmscoe"' \
+              '    secrets: inherit' \
+              > "$repo/.github/workflows/package-rule-rc.yml"
+            # Stable caller stub
+            printf '%s\n' \
+              '# SPDX-License-Identifier: Apache-2.0' \
+              '# This file is managed centrally -- do not edit manually.' \
+              '# To change build behaviour, update the reusable workflow in frmscoe/workflows.' \
+              'on:' \
+              '  push:' \
+              '    branches: [main]' \
+              '  workflow_dispatch:' \
+              'jobs:' \
+              '  build:' \
+              "    uses: frmscoe/workflows/.github/workflows/package-rule.yml@v1" \
+              '    with:' \
+              "      rule_number: \"${RULE_NUM}\"" \
+              '      rule_org: "frmscoe"' \
+              '    secrets: inherit' \
+              > "$repo/.github/workflows/package-rule.yml"
+            echo "Stamped caller stubs for rule-${RULE_NUM} (frmscoe)"
+
+            cd "$repo"
+            # Copy .codacy.yml to repo root - standard engine allowlist for TS/Node repos
+            cp "${WORKFLOWS_ROOT}/config-templates/.codacy.yml" ".codacy.yml"
+            # Remove legacy dco-check.yaml (wrong extension - canonical is dco-check.yml)
+            rm -f .github/workflows/dco-check.yaml
+            # Drop private-repo Code Security scanners if still present from older syncs
+            rm -f .github/workflows/njsscan.yml
+            rm -f .github/workflows/scorecard.yml
+            git add -A .github/workflows/ .codacy.yml
+            git commit -m "ci: sync workflows from central-workflows [skip ci]" -m "${SIGNED_OFF_BY}" || echo "No changes to commit"
             git push origin sync-workflows-update || git push origin sync-workflows-update --force
-            
-            # Clear the GITHUB_TOKEN environment variable and use a temporary file for gh authentication
-            echo "${{ secrets.GH_TOKEN }}" > /tmp/gh_token
-            unset GITHUB_TOKEN
-            gh auth login --with-token < /tmp/gh_token
-            
+
             # Create the PR with reviewers
             IFS=',' read -ra REVIEWERS <<< "${PR_REVIEWERS}"
             REVIEWERS_ARGS=""
@@ -139,10 +238,10 @@ jobs:
               REVIEWERS_ARGS+="--reviewer $reviewer "
             done
 
-            gh pr create --title "ci: sync workflows from central-workflows" --body "This PR syncs workflows from the central-workflows repository. ${SIGNED_OFF_BY}" --base dev --head sync-workflows-update $REVIEWERS_ARGS || echo "PR already exists, updating existing PR"
-            
-            # Cleanup
-            rm /tmp/gh_token
-            
+            PR_BODY="This PR syncs workflows from the central-workflows repository."$'\n\n'"${SIGNED_OFF_BY}"
+            if ! gh pr create --title "ci: sync workflows from central-workflows [skip ci]" --body "$PR_BODY" --base dev --head sync-workflows-update $REVIEWERS_ARGS; then
+              gh pr edit sync-workflows-update --title "ci: sync workflows from central-workflows [skip ci]" --body "$PR_BODY" || echo "PR already exists but could not be updated"
+            fi
+
             cd ..
           done
