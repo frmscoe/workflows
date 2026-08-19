@@ -79,4 +79,8 @@ None (uses GitHub OIDC token via `id-token: write`).
 
 | Repository | Reason |
 |-----------|--------|
-| _(none)_ | _(all synced service repos use the canonical version)_ |
+| All private `frmscoe` rule repos | **Not synced.** Scorecard SARIF upload needs Code Security on private repos. Scanning stays on public `tazama-lf/rule-901` and `rule-902`. See README decision. |
+
+## frmscoe-specific notes
+
+`sync-workflows.yml` excludes `scorecard.yml` from the private-rule bundle and deletes leftover copies on sync. The file may still exist in this central repo for reference.

@@ -51,11 +51,36 @@ tazama-lf/workflows  →  (manual PR)  →  frmscoe/workflows  →  (auto sync o
 
 All 33 rule repos receive:
 
-`branch-target-check.yml`, `codacy.yml`, `codeql.yml`, `conventional-commits.yml`, `dco-check.yml`, `dependency-review.yml`, `gpg-verify.yml`, `milestone.yml`, `njsscan.yml`, `node.js.yml` (caller stub), `publish.yml`, `release-train.yml`, `release.yml`, `sbom.yml`, `scorecard.yml`, `version-check.yml`
+`branch-target-check.yml`, `codacy.yml`, `codeql.yml`, `conventional-commits.yml`, `dco-check.yml`, `dependency-review.yml`, `gpg-verify.yml`, `node.js.yml` (caller stub), `sbom.yml`
 
 Plus per-repo caller stubs for: `package-rule-rc.yml` (fires on `push: dev`) and `package-rule.yml` (fires on `push: main`)
 
-**Not distributed:** `sync-workflows.yml`, `node-ci.yml` (reusable workflow stays in this repo; consumer repos reference it at runtime via `@dev` ref), `package-rule*.yml` canonical reusable definitions (replaced with caller stubs)
+**Not distributed:** `sync-workflows.yml`, `node-ci.yml` (reusable workflow stays in this repo; consumer repos reference it at runtime via `@dev` ref), `package-rule*.yml` canonical reusable definitions (replaced with caller stubs), `dev-to-main-pr.yml` / `publish.yml` / `release*.yml` / `version-check.yml` (library or central-only), `njsscan.yml`, `scorecard.yml` (see decision below)
+
+---
+
+## Decision: no dedicated Code Security scanning on private frmscoe rule repos
+
+**Date:** August 2026
+
+**Context:** `njsscan` and Scorecard upload SARIF into GitHub Code scanning. On private and internal repos that needs paid [GitHub Code Security](https://docs.github.com/en/billing/concepts/product-billing/github-advanced-security) (list price about $30 per unique 90-day active committer / month). Enablement on private `frmscoe` rule repos is locked by a billing issue, so those jobs fail without producing a usable dashboard.
+
+**Decision:** Do **not** run dedicated billable code-scanning workflows (`njsscan.yml`, `scorecard.yml`) on the private `frmscoe` rule repos. Keep that scanning on the **public** reference rules instead:
+
+- [`tazama-lf/rule-901`](https://github.com/tazama-lf/rule-901) (already has `njsscan.yml`; Scorecard added separately)
+- [`tazama-lf/rule-902`](https://github.com/tazama-lf/rule-902) (same)
+
+Fixes and findings picked up on those public repos are expected to propagate into the `frmscoe` rules through the normal central-workflow / release path. Paying for Code Security on every private rule repo is not required for that model.
+
+**What we changed here:**
+
+1. Documented this decision in this README.
+2. Stopped syncing `njsscan.yml` and `scorecard.yml` to the 33 private rule repos, and remove those files on sync if they are still present.
+3. Left the workflow definitions in this repo for reference / possible use on public surfaces. They are no longer part of the private-rule sync bundle.
+
+**Out of scope for this decision:** CodeQL and Codacy also use SARIF upload and can hit the same Code Security lock on private repos. They were not removed here. Revisit if they stay red for the same billing reason.
+
+**Related:** [tazama-lf/workflows#66](https://github.com/tazama-lf/workflows/issues/66) (CodeQL Action v3 → v4) is separate hygiene and does not unblock private-repo SARIF while Code Security is locked.
 
 ---
 
@@ -81,7 +106,7 @@ Individual workflow documentation is in [`workflow-docs/`](workflow-docs/). For 
 | [`dockerhub-image-build.md`](workflow-docs/dockerhub-image-build.md) | Not in frmscoe/workflows |
 | [`gpg-verify.md`](workflow-docs/gpg-verify.md) | → tazama-lf docs |
 | [`milestone.md`](workflow-docs/milestone.md) | → tazama-lf docs |
-| [`njsscan.md`](workflow-docs/njsscan.md) | → tazama-lf docs |
+| [`njsscan.md`](workflow-docs/njsscan.md) | Not synced to private frmscoe rules (public rule-901/902) |
 | [`node-ci.md`](workflow-docs/node-ci.md) | frmscoe-specific (`NPM_SCOPE=@frmscoe`) |
 | [`nodejs.md`](workflow-docs/nodejs.md) | → tazama-lf docs |
 | [`package-rule-rc.md`](workflow-docs/package-rule-rc.md) | frmscoe-specific |
@@ -90,7 +115,7 @@ Individual workflow documentation is in [`workflow-docs/`](workflow-docs/). For 
 | [`release-train.md`](workflow-docs/release-train.md) | → tazama-lf docs |
 | [`release.md`](workflow-docs/release.md) | → tazama-lf docs |
 | [`sbom.md`](workflow-docs/sbom.md) | → tazama-lf docs (⚠️ known issue [#39](https://github.com/tazama-lf/workflows/issues/39)) |
-| [`scorecard.md`](workflow-docs/scorecard.md) | → tazama-lf docs |
+| [`scorecard.md`](workflow-docs/scorecard.md) | Not synced to private frmscoe rules (public rule-901/902) |
 | [`sync-workflows.md`](workflow-docs/sync-workflows.md) | frmscoe-specific |
 | [`version-check.md`](workflow-docs/version-check.md) | → tazama-lf docs |
 

@@ -70,6 +70,8 @@ Propagates canonical workflow files and the standard `.codacy.yml` engine allowl
 | `sync-workflows.yml` | Canonical-only; never distributed |
 | `node-ci.yml` | Reusable workflow; consumer repos reference it at runtime via `@dev` |
 | `package-rule*.yml` (canonical definitions) | Replaced with per-repo caller stubs (see above) |
+| `njsscan.yml` | Not for private frmscoe rules; Code Security billable. Keep on public `tazama-lf/rule-901` / `rule-902` |
+| `scorecard.yml` | Same as njsscan; also removed from targets on sync if still present |
 
 ---
 

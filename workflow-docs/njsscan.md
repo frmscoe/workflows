@@ -6,4 +6,6 @@
 
 ## frmscoe-specific notes
 
-_None - behaviour in `frmscoe` rule repos is identical to the canonical workflow._
+**Not distributed to private `frmscoe` rule repos.** SARIF upload needs GitHub Code Security on private repos (billable). Decision: keep Node security scanning on the public reference rules [`tazama-lf/rule-901`](https://github.com/tazama-lf/rule-901) and [`tazama-lf/rule-902`](https://github.com/tazama-lf/rule-902), and propagate fixes through the normal central-workflow path. See the README section *Decision: no dedicated Code Security scanning on private frmscoe rule repos*.
+
+The caller stub and `njsscan-ci.yml` remain in this repo for reference. `sync-workflows.yml` excludes them from the private-rule bundle and removes leftover copies on sync.
