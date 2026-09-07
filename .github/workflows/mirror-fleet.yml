@@ -1,0 +1,66 @@
+name: Mirror Fleet
+
+# Pushes released main + tags of each frmscoe repo to its read-only mirror in the
+# tazama-rules org. Deliberate release-day step: dispatch only, no automatic triggers.
+
+on:
+  workflow_dispatch:
+    inputs:
+      repos:
+        description: 'Comma-separated subset to mirror (empty = full fleet)'
+        required: false
+        default: ''
+
+permissions: {}
+
+env:
+  FLEET: rule-001,rule-002,rule-003,rule-004,rule-006,rule-007,rule-008,rule-010,rule-011,rule-016,rule-017,rule-018,rule-020,rule-021,rule-024,rule-025,rule-026,rule-027,rule-028,rule-030,rule-044,rule-045,rule-048,rule-054,rule-063,rule-074,rule-075,rule-076,rule-078,rule-083,rule-084,rule-090,rule-091,tms-configuration
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint mirror push token
+        id: mirror-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          app-id: ${{ secrets.MIRROR_APP_ID }}
+          private-key: ${{ secrets.MIRROR_APP_PRIVATE_KEY }}
+          owner: tazama-rules
+
+      - name: Mirror main + tags
+        env:
+          SOURCE_TOKEN: ${{ secrets.GH_TOKEN }}
+          PUSH_TOKEN: ${{ steps.mirror-token.outputs.token }}
+          REPOS_INPUT: ${{ inputs.repos }}
+        run: |
+          set -uo pipefail
+          LIST=$(echo "${REPOS_INPUT:-$FLEET}" | tr -d ' ')
+          FAILED=()
+          {
+            echo "| Repo | Result |"
+            echo "| --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          IFS=',' read -ra REPOS <<< "$LIST"
+          for repo in "${REPOS[@]}"; do
+            [ -z "$repo" ] && continue
+            echo "::group::$repo"
+            rm -rf work
+            if git clone --quiet --branch main --single-branch \
+                 "https://x-access-token:${SOURCE_TOKEN}@github.com/frmscoe/${repo}.git" work \
+               && git -C work fetch --quiet --tags origin \
+               && git -C work push --quiet --force \
+                    "https://x-access-token:${PUSH_TOKEN}@github.com/tazama-rules/${repo}.git" \
+                    main "refs/tags/*:refs/tags/*"; then
+              echo "| ${repo} | mirrored |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| ${repo} | **FAILED** |" >> "$GITHUB_STEP_SUMMARY"
+              FAILED+=("$repo")
+            fi
+            echo "::endgroup::"
+          done
+          rm -rf work
+          if [ "${#FAILED[@]}" -gt 0 ]; then
+            echo "Failed repos: ${FAILED[*]}"
+            exit 1
+          fi

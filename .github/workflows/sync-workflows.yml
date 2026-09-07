@@ -132,6 +132,7 @@ jobs:
           rm -f temp-workflows/release.yml
           rm -f temp-workflows/release-train.yml
           rm -f temp-workflows/release-orchestrator.yml
+          rm -f temp-workflows/mirror-fleet.yml      # central-only: mirrors the fleet to tazama-rules read-only org
           # Private frmscoe rule repos: no dedicated Code Security scanning.
           # SARIF uploads (njsscan / Scorecard) stay on public tazama-lf rule-901/902.
           # See README "Decision: no dedicated Code Security scanning on private frmscoe rule repos".
